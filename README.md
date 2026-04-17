@@ -4,4 +4,4 @@
 *Nombre completo:* Jocelin Margarita juarez Ruelas  
 *Carrera:* programacion  
 *Matrícula:* 24308060610004 
-*Fecha de entrega:* 02/02/26
+
