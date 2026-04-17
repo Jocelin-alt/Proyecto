@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Panel</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #fdf2f8;
+        }
+
+        .btn-rosa {
+            background-color: #f472b6;
+            color: white;
+        }
+
+        .btn-rosa:hover {
+            background-color: #ec4899;
+        }
+
+        .titulo {
+            color: #b63068;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar bg-white shadow-sm">
+    <div class="container d-flex justify-content-between align-items-center">
+
+        
+        <span class="navbar-brand text-danger mb-0">Gestor De tareas
+        </span>
+
+        
+        <div class="d-flex align-items-center gap-3">
+            <h6 class="mb-0 text-dark">
+                Hola, {{ session['usuario'] }} 
+            </h6>
+            <a href="/logout" class="btn btn-outline-danger btn-sm">Salir</a>
+        </div>
+
+    </div>
+</nav>
+
+    <div class="container mt-4">
+
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="text-danger">Agregar tarea</h5>
+                <input class="form-control mb-2" placeholder="Título">
+                <textarea class="form-control mb-2" placeholder="Descripción"></textarea>
+                <button class="btn btn-rosa">Guardar</button>
+            </div>
+        </div>
+
+        <div class="row">
+
+
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="text-secondary">En proceso</h5>
+                        <p class="text-muted">Tareas pendientes</p>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="text-success">Completadas</h5>
+                        <p class="text-muted">Tareas terminadas</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        {% with mensajes = get_flashed_messages() %}
+        {% if mensajes %}
+        <div class="alert alert-danger mt-3 text-center">
+            {{ mensajes[0] }}
+        </div>
+        {% endif %}
+        {% endwith %}
+    </div>
+
+</body>
+
+</html>
