@@ -1,11 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
+from GestorTareas import GestorTareas
 
 app = Flask(__name__)
-app.secret_key = 'clave_simple'
 
+app.secret_key = 'fdg4t3gfre3v4'
 
-usuarios = {}
-
+gestor = GestorTareas()
+gestor.crear_usuario("Joss", "Josselin@gmail.com", "123456")
 
 @app.route('/signup', methods=['GET', 'POST'])
 def registro():
@@ -33,21 +34,25 @@ def registro():
 
     return render_template('registro.html')
 
-
-
 @app.route('/', methods=['GET', 'POST'])
-@app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        correo = request.form['email']
-        clave = request.form['password']
+    if 'id_sesion' in session:
+        return redirect(url_for('dashboard'))
 
-        if correo in usuarios and usuarios[correo]['password'] == clave:
-            session['usuario'] = usuarios[correo]['nombre']
-            session['correo'] = correo
+    if request.method == 'POST':
+        user_mail = request.form.get('email')
+        user_pass = request.form.get('password')
+
+        cuenta = gestor.obtener_usuario2(user_mail, user_pass)
+
+        if cuenta:
+            session['id_sesion'] = str(cuenta['_id'])
+            session['user_name'] = cuenta['nombre']
+            
+            flash(f'Sesión iniciada: Hola {cuenta["nombre"]}', 'primary')
             return redirect(url_for('dashboard'))
         else:
-            flash('Correo o contraseña incorrectos')
+            flash('Acceso denegado: credenciales erróneas.', 'danger')
 
     return render_template('login.html')
 
@@ -69,11 +74,11 @@ def recuperar():
 
 
 
-@app.route('/dashboard')
+@app.route('/tareas')
 def dashboard():
-    if 'usuario' not in session:
+    if 'id_sesion' not in session:
         return redirect(url_for('login'))
-
+    
     return render_template('dashboard.html')
 
 
