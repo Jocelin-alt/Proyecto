@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control - Gestor de Tareas</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #fdf2f8;
+        }
+
+        .btn-rosa {
+            background-color: #f472b6;
+            color: white;
+        }
+
+        .btn-rosa:hover {
+            background-color: #ec4899;
+            color: white;
+        }
+
+        .titulo-navbar {
+            color: #dc3545;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        /* Estilo para que el dropdown se vea integrado */
+        .user-dropdown {
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar bg-white shadow-sm mb-4">
+        <div class="container d-flex justify-content-between align-items-center">
+
+            <a href="#" class="navbar-brand titulo-navbar mb-0">Gestor De Tareas</a>
+
+            <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle d-flex align-items-center border-0" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="me-2 text-dark">Hola, <strong>{{ session['usuario'] }}</strong></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="userMenu">
+                    <li><h6 class="dropdown-header">Mi Cuenta</h6></li>
+                    <li><a class="dropdown-item" href="/perfil">Ver Perfil</a></li>
+                    <li><a class="dropdown-item" href="/editar-perfil">Editar Perfil</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="/logout">Cerrar Sesión</a></li>
+                </ul>
+            </div>
+
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <div class="card shadow-sm mb-4 border-0">
+            <div class="card-body">
+                <h5 class="text-danger mb-3">Agregar nueva tarea</h5>
+                <form action="/agregar" method="POST">
+                    <input class="form-control mb-2" name="titulo" placeholder="Título de la tarea" required>
+                    <textarea class="form-control mb-2" name="descripcion" placeholder="¿De qué trata la tarea?"></textarea>
+                    <button type="submit" class="btn btn-rosa px-4">Guardar Tarea</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <h5 class="text-secondary">En proceso</h5>
+                        <p class="text-muted small">Tareas pendientes por realizar</p>
+                        <hr>
+                        </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <h5 class="text-success">Completadas</h5>
+                        <p class="text-muted small">Tareas que ya terminaste</p>
+                        <hr>
+                        </div>
+                </div>
+            </div>
+        </div>
+
+        {% with mensajes = get_flashed_messages() %}
+        {% if mensajes %}
+        <div class="alert alert-info mt-3 text-center shadow-sm">
+            {{ mensajes[0] }}
+        </div>
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>
