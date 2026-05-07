@@ -3,93 +3,312 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Panel</title>
+    <title>Gestor</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
         body {
-            background-color: #fdf2f8;
+            background-color: #fff1f7;
+        }
+
+        .titulo {
+            color: #db2777;
         }
 
         .btn-rosa {
-            background-color: #f472b6;
+            background: #ec4899;
             color: white;
         }
 
         .btn-rosa:hover {
-            background-color: #ec4899;
+            background: #db2777;
+            color: white;
         }
 
-        .titulo {
-            color: #b63068;
-            font-weight: bold;
+        .tarjeta {
+            border-left: 5px solid #ec4899;
+        }
+
+        .historial {
+            background: #fff7fb;
+            border: 1px solid #fbcfe8;
         }
     </style>
+
 </head>
 
 <body>
 
-<nav class="navbar bg-white shadow-sm">
-    <div class="container d-flex justify-content-between align-items-center">
-
-        
-        <span class="navbar-brand text-danger mb-0">Gestor De tareas
-        </span>
-
-        
-        <div class="d-flex align-items-center gap-3">
-            <h6 class="mb-0 text-dark">
-                Hola, {{ session['usuario'] }} 
-            </h6>
-            <a href="/logout" class="btn btn-outline-danger btn-sm">Salir</a>
-        </div>
-
-    </div>
-</nav>
-
     <div class="container mt-4">
 
+       
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+
+            <div>
+
+                <h1 class="titulo fw-bold">
+                    Gestor de tareas
+                </h1>
+
+                <small class="text-muted">
+                    Hola {{ session['usuario'] }}
+                </small>
+
+            </div>
+
+            <a href="/logout" class="btn btn-outline-danger">
+                Salir
+            </a>
+
+        </div>
+
+       
 
         <div class="card shadow-sm mb-4">
+
             <div class="card-body">
-                <h5 class="text-danger">Agregar tarea</h5>
-                <input class="form-control mb-2" placeholder="Título">
-                <textarea class="form-control mb-2" placeholder="Descripción"></textarea>
-                <button class="btn btn-rosa">Guardar</button>
+
+                <h4 class="text-danger mb-3">
+                    Nueva actividad
+                </h4>
+
+                <form method="POST">
+
+                    <div class="mb-3">
+
+                        <input type="text" name="titulo" class="form-control" placeholder="Título" required>
+
+                    </div>
+
+                    <div class="mb-3">
+
+                        <textarea name="descripcion" class="form-control" rows="3" placeholder="Descripción"
+                            required></textarea>
+
+                        <div class="mb-3">
+
+                            <input type="date" name="fecha_limite" class="form-control" required>
+
+                        </div>
+
+                    </div>
+
+                    <button type="submit" class="btn btn-rosa">
+                        Guardar tarea
+                    </button>
+
+                </form>
+
             </div>
+
         </div>
+
+        
 
         <div class="row">
 
+            
 
-            <div class="col-md-6">
+            <div class="col-md-7">
+
                 <div class="card shadow-sm">
+
                     <div class="card-body">
-                        <h5 class="text-secondary">En proceso</h5>
-                        <p class="text-muted">Tareas pendientes</p>
+
+                        <h5 class="text-primary mb-3">
+                            Actividades pendientes
+                        </h5>
+
+                        {% for tarea in pendientes %}
+
+                        <div class="card shadow-sm mb-3 tarjeta">
+
+                            <div class="card-body">
+
+                                <div class="d-flex justify-content-between">
+
+                                    <h6 class="fw-bold">
+                                        {{ tarea.titulo }}
+                                    </h6>
+
+                                    <span class="badge bg-warning text-dark">
+                                        {{ tarea.estado }}
+                                    </span>
+
+                                </div>
+
+                                <p class="text-muted mt-2">
+                                    {{ tarea.descripcion }}
+                                </p>
+
+                                <small class="text-secondary">
+                                    Creada:
+                                    {{ tarea.fecha_creacion.strftime('%d/%m/%Y') }}
+                                </small>
+
+                                <br>
+
+                                <small class="text-danger">
+
+                                    Entrega:
+
+                                    {% if tarea.fecha_limite %}
+                                    {{ tarea.fecha_limite.strftime('%d/%m/%Y') }}
+                                    {% else %}
+                                    Sin fecha
+                                    {% endif %}
+
+                                </small>
+
+                                <div class="mt-3 d-flex gap-2 flex-wrap">
+
+                                    <a href="/editar/{{ tarea._id }}" class="btn btn-outline-primary btn-sm">
+                                        Editar
+                                    </a>
+
+                                    <a href="/completar/{{ tarea._id }}" class="btn btn-success btn-sm">
+                                        Completar
+                                    </a>
+
+                                    <a href="/eliminar/{{ tarea._id }}" class="btn btn-danger btn-sm">
+                                        Eliminar
+                                    </a>
+
+                                </div>
+
+                                <form method="POST" action="/cancelar/{{ tarea._id }}" class="mt-3">
+
+                                    <input type="text" name="motivo" class="form-control mb-2"
+                                        placeholder="Motivo de cancelación" required>
+
+                                    <button class="btn btn-warning btn-sm">
+                                        Cancelar tarea
+                                    </button>
+
+                                </form>
+
+                            </div>
+
+                        </div>
+
+                        {% endfor %}
+
                     </div>
+
                 </div>
+
             </div>
 
+            
 
-            <div class="col-md-6">
+            <div class="col-md-5">
+
                 <div class="card shadow-sm">
+
                     <div class="card-body">
-                        <h5 class="text-success">Completadas</h5>
-                        <p class="text-muted">Tareas terminadas</p>
+
+                        <h5 class="text-success mb-3">
+                            Historial
+                        </h5>
+
+                        
+
+                        {% for tarea in completadas %}
+
+                        <div class="historial rounded p-3 mb-3">
+
+                            <div class="d-flex justify-content-between">
+
+                                <h6 class="text-decoration-line-through">
+                                    {{ tarea.titulo }}
+                                </h6>
+
+                                <span class="badge bg-success">
+                                    completada
+                                </span>
+
+                            </div>
+
+                            <p class="small text-muted mt-2">
+                                {{ tarea.descripcion }}
+                            </p>
+
+                            <small>
+                                Creada:
+                                {{ tarea.fecha_creacion.strftime('%d/%m/%Y') }}
+                            </small>
+
+                        </div>
+
+                        {% endfor %}
+
+                        
+
+                        {% for tarea in canceladas %}
+
+                        <div class="historial rounded p-3 mb-3">
+
+                            <div class="d-flex justify-content-between">
+
+                                <h6 class="text-decoration-line-through">
+                                    {{ tarea.titulo }}
+                                </h6>
+
+                                <span class="badge bg-danger">
+                                    cancelada
+                                </span>
+
+                            </div>
+
+                            <p class="small text-muted mt-2">
+                                {{ tarea.descripcion }}
+                            </p>
+
+                            <small>
+                                Creada:
+                                {{ tarea.fecha_creacion.strftime('%d/%m/%Y') }}
+                            </small>
+
+                            <div class="alert alert-danger mt-2 p-2">
+
+                                <strong>
+                                    Motivo:
+                                </strong>
+
+                                {{ tarea.motivo }}
+
+                            </div>
+
+                        </div>
+
+                        {% endfor %}
+
                     </div>
+
                 </div>
+
             </div>
 
         </div>
+
+        
+
         {% with mensajes = get_flashed_messages() %}
+
         {% if mensajes %}
-        <div class="alert alert-danger mt-3 text-center">
+
+        <div class="alert alert-info mt-4 text-center">
+
             {{ mensajes[0] }}
+
         </div>
+
         {% endif %}
+
         {% endwith %}
+
     </div>
 
 </body>

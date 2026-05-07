@@ -1,91 +1,248 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+from datetime import datetime
 from GestorTareas import GestorTareas
 
 app = Flask(__name__)
+app.secret_key = "clave"
 
-app.secret_key = 'fdg4t3gfre3v4'
+db = GestorTareas()
 
-gestor = GestorTareas()
-gestor.crear_usuario("Joss", "Josselin@gmail.com", "123456")
 
-@app.route('/signup', methods=['GET', 'POST'])
-def registro():
-    if request.method == 'POST':
-        nombre = request.form['nombre']
-        correo = request.form['email']
-        clave = request.form['password']
-        confirmar = request.form['confirmar_password']
-
-        if clave != confirmar:
-            flash('Las contraseñas no coinciden')
-            return redirect(url_for('registro'))
-
-        if correo in usuarios:
-            flash('El correo ya existe')
-            return redirect(url_for('registro'))
-
-        usuarios[correo] = {
-            "nombre": nombre,
-            "password": clave
-        }
-
-        flash('Cuenta creada correctamente')
-        return redirect(url_for('login'))
-
-    return render_template('registro.html')
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
-    if 'id_sesion' in session:
-        return redirect(url_for('dashboard'))
+
+    if 'usuario_id' in session:
+        return redirect(url_for('panel'))
 
     if request.method == 'POST':
-        user_mail = request.form.get('email')
-        user_pass = request.form.get('password')
 
-        cuenta = gestor.obtener_usuario2(user_mail, user_pass)
+        correo = request.form.get('email')
+        password = request.form.get('password')
 
-        if cuenta:
-            session['id_sesion'] = str(cuenta['_id'])
-            session['user_name'] = cuenta['nombre']
-            
-            flash(f'Sesión iniciada: Hola {cuenta["nombre"]}', 'primary')
-            return redirect(url_for('dashboard'))
+        usuario = db.obtener_usuario2(correo, password)
+
+        if usuario:
+
+            session['usuario_id'] = str(usuario['_id'])
+            session['usuario'] = usuario['username']
+
+            flash('Bienvenido')
+            return redirect(url_for('panel'))
+
         else:
-            flash('Acceso denegado: credenciales erróneas.', 'danger')
+            flash('Correo o contraseña incorrectos')
 
     return render_template('login.html')
 
 
-@app.route('/reset', methods=['GET', 'POST'])
-def recuperar():
+
+@app.route('/registro', methods=['GET', 'POST'])
+def registro():
+
     if request.method == 'POST':
-        correo = request.form['email']
-        nueva = request.form['nueva_password']
 
-        if correo in usuarios:
-            usuarios[correo]['password'] = nueva
-            flash('Contraseña actualizada')
-            return redirect(url_for('login'))
-        else:
-            flash('Correo no encontrado')
+        nombre = request.form.get('nombre')
+        correo = request.form.get('email')
+        password = request.form.get('password')
+        confirmar = request.form.get('confirmar_password')
 
-    return render_template('recuperar.html')
+        if not nombre or not correo or not password:
 
+            flash('Completa todos los campos')
+            return redirect(url_for('registro'))
 
+        if password != confirmar:
 
-@app.route('/tareas')
-def dashboard():
-    if 'id_sesion' not in session:
+            flash('Las contraseñas no coinciden')
+            return redirect(url_for('registro'))
+
+        existe = db.usuarios.find_one({
+            "email": correo
+        })
+
+        if existe:
+
+            flash('Ese correo ya existe')
+            return redirect(url_for('registro'))
+
+        nuevo_usuario = {
+            "username": nombre,
+            "email": correo,
+            "password": password,
+            "fecha": datetime.now()
+        }
+
+        db.usuarios.insert_one(nuevo_usuario)
+
+        flash('Cuenta creada correctamente')
+
         return redirect(url_for('login'))
-    
-    return render_template('dashboard.html')
+
+    return render_template('registro.html')
+
+
+@app.route('/panel', methods=['GET', 'POST'])
+def panel():
+
+    if 'usuario_id' not in session:
+        return redirect(url_for('login'))
+
+    usuario = session['usuario_id']
+
+    if request.method == 'POST':
+
+        titulo = request.form.get('titulo')
+        descripcion = request.form.get('descripcion')
+
+        db.crear_tarea(
+            usuario,
+            titulo,
+            descripcion
+        )
+
+        flash('Actividad agregada')
+
+        return redirect(url_for('panel'))
+
+    pendientes = db.obtener_tareas_usuario(
+        usuario,
+        'pendiente'
+    )
+
+    completadas = db.obtener_tareas_usuario(
+        usuario,
+        'completada'
+    )
+
+    canceladas = db.obtener_tareas_usuario(
+        usuario,
+        'cancelada'
+    )
+
+    return render_template(
+        'dashboard.html',
+        pendientes=pendientes,
+        completadas=completadas,
+        canceladas=canceladas
+    )
+
+
+@app.route('/completar/<id>')
+def completar(id):
+
+    if 'usuario_id' in session:
+
+        db.actualizar_estado_tarea(
+            id,
+            'completada'
+        )
+
+        flash('Tarea completada')
+
+    return redirect(url_for('panel'))
+
+
+@app.route('/cancelar/<id>', methods=['POST'])
+def cancelar(id):
+
+    if 'usuario_id' in session:
+
+        motivo = request.form.get('motivo')
+
+        db.actualizar_estado_tarea(
+            id,
+            'cancelada'
+        )
+
+        tareas = db.obtener_tareas_usuario(
+            session['usuario_id']
+        )
+
+        for tarea in tareas:
+
+            if tarea['_id'] == id:
+
+                db.tareas.update_one(
+                    {"titulo": tarea['titulo']},
+                    {
+                        "$set": {
+                            "motivo": motivo
+                        }
+                    }
+                )
+
+                break
+
+        flash('Tarea cancelada')
+
+    return redirect(url_for('panel'))
+
+
+@app.route('/eliminar/<id>')
+def eliminar(id):
+
+    if 'usuario_id' in session:
+
+        db.eliminar_tarea(id)
+
+        flash('Tarea eliminada')
+
+    return redirect(url_for('panel'))
+
+
+
+@app.route('/editar/<id>', methods=['GET', 'POST'])
+def editar(id):
+
+    if 'usuario_id' not in session:
+        return redirect(url_for('login'))
+
+    tareas = db.obtener_tareas_usuario(
+        session['usuario_id']
+    )
+
+    tarea_actual = None
+
+    for tarea in tareas:
+
+        if tarea['_id'] == id:
+            tarea_actual = tarea
+            break
+
+    if request.method == 'POST':
+
+        titulo = request.form.get('titulo')
+        descripcion = request.form.get('descripcion')
+
+        db.tareas.update_one(
+            {"titulo": tarea_actual['titulo']},
+            {
+                "$set": {
+                    "titulo": titulo,
+                    "descripcion": descripcion
+                }
+            }
+        )
+
+        flash('Tarea actualizada')
+
+        return redirect(url_for('panel'))
+
+    return render_template(
+        'editar.html',
+        tarea=tarea_actual
+    )
 
 
 
 @app.route('/logout')
 def logout():
+
     session.clear()
+
+    flash('Sesión cerrada')
+
     return redirect(url_for('login'))
 
 
